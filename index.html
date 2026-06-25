@@ -230,4 +230,344 @@
         .btn-audio {
             background-color: #4b5563;
             width: auto;
-            padding: 6px 15px
+            padding: 6px 15px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+        .btn-audio:hover { background-color: #374151; }
+
+        /* ナビゲーションバー */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            z-index: 10;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 0.85rem;
+            color: #6b7280;
+            cursor: pointer;
+            border-top: 3px solid transparent;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            border-top-color: var(--primary-color);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>スピーキング練習アプリ</h1>
+    </header>
+
+    <div class="container">
+        <div id="tab-add" class="tab-content active">
+            <div class="card">
+                <h2 id="form-title" style="margin-bottom: 15px; font-size: 1.1rem;">フレーズ・単語を登録</h2>
+                <div class="form-group">
+                    <label for="input-eng">英語 (フレーズ / 単語)</label>
+                    <input type="text" id="input-eng" placeholder="例: I'm tied up right now.">
+                </div>
+                <div class="form-group">
+                    <label for="input-jpn">日本語の意味・出すお題</label>
+                    <input type="text" id="input-jpn" placeholder="例: 今、手が離せないんだ。">
+                </div>
+                <div class="form-group">
+                    <label for="input-memo">解説・別の言い方 (任意)</label>
+                    <textarea id="input-memo" placeholder="例: busyよりも「他の用目で身動きが取れない」ニュアンス。"></textarea>
+                </div>
+                <button id="submit-btn" onclick="saveVocab()">登録する</button>
+            </div>
+        </div>
+
+        <div id="tab-list" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">登録済みリスト (<span id="vocab-count">0</span>)</h2>
+                <div id="vocab-list-container">
+                    </div>
+            </div>
+        </div>
+
+        <div id="tab-review" class="tab-content">
+            <div id="review-container">
+                </div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchTab('tab-add', event)">📝 登録</div>
+        <div class="nav-item" onclick="switchTab('tab-list', event)">📚 一覧</div>
+        <div class="nav-item" onclick="switchTab('tab-review', event); startReview();">🔄 復習</div>
+    </nav>
+
+    <script>
+        let vocabData = JSON.parse(localStorage.getItem('my_vocab_data')) || [];
+        let editId = null; // 編集中のアイテムIDを管理する変数
+
+        // タブ切り替え機能
+        function switchTab(tabId, e) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            
+            if (e) {
+                e.currentTarget.classList.add('active');
+            } else {
+                // スクリプトからタブを切り替える際、ナビゲーションバーの見た目も同期させる
+                const navItems = document.querySelectorAll('.nav-item');
+                if (tabId === 'tab-add') navItems[0].classList.add('active');
+                if (tabId === 'tab-list') navItems[1].classList.add('active');
+                if (tabId === 'tab-review') navItems[2].classList.add('active');
+            }
+
+            // 編集モードのまま他のタブに移動した場合は、編集モードを解除する
+            if (tabId !== 'tab-add' && editId !== null) {
+                cancelEditMode();
+            }
+
+            if (tabId === 'tab-list') {
+                renderList();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('my_vocab_data', JSON.stringify(vocabData));
+        }
+
+        // 登録および更新処理
+        function saveVocab() {
+            const eng = document.getElementById('input-eng').value.trim();
+            const jpn = document.getElementById('input-jpn').value.trim();
+            const memo = document.getElementById('input-memo').value.trim();
+
+            if (!eng || !jpn) {
+                alert('英語と日本語は必須入力です。');
+                return;
+            }
+
+            if (editId !== null) {
+                // 【編集モード】既存データの更新
+                const item = vocabData.find(i => i.id === editId);
+                if (item) {
+                    item.eng = eng;
+                    item.jpn = jpn;
+                    item.memo = memo;
+                }
+                alert('更新しました！');
+                cancelEditMode();
+            } else {
+                // 【新規登録モード】新しいデータの追加
+                const newItem = {
+                    id: Date.now(),
+                    eng: eng,
+                    jpn: jpn,
+                    memo: memo,
+                    status: 'yet'
+                };
+                vocabData.push(newItem);
+                alert('登録しました！');
+            }
+
+            saveToLocalStorage();
+            clearForm();
+            switchTab('tab-list'); // 自動で一覧画面に戻る
+        }
+
+        // フォームの初期化
+        function clearForm() {
+            document.getElementById('input-eng').value = '';
+            document.getElementById('input-jpn').value = '';
+            document.getElementById('input-memo').value = '';
+        }
+
+        // 編集モードの解除
+        function cancelEditMode() {
+            editId = null;
+            document.getElementById('form-title').innerText = 'フレーズ・単語を登録';
+            document.getElementById('submit-btn').innerText = '登録する';
+            document.getElementById('submit-btn').style.backgroundColor = 'var(--primary-color)';
+        }
+
+        // 編集モードの開始
+        function startEdit(id) {
+            const item = vocabData.find(i => i.id === id);
+            if (!item) return;
+
+            editId = id;
+            
+            // フォームに現在の値をセット
+            document.getElementById('input-eng').value = item.eng;
+            document.getElementById('input-jpn').value = item.jpn;
+            document.getElementById('input-memo').value = item.memo || '';
+
+            // フォームのタイトルとボタンを編集仕様に変更
+            document.getElementById('form-title').innerText = 'フレーズ・単語を編集';
+            document.getElementById('submit-btn').innerText = '更新する';
+            document.getElementById('submit-btn').style.backgroundColor = 'var(--edit-color)';
+
+            // 登録（編集）タブへ移動
+            switchTab('tab-add');
+        }
+
+        function renderList() {
+            const container = document.getElementById('vocab-list-container');
+            document.getElementById('vocab-count').innerText = vocabData.length;
+            container.innerHTML = '';
+
+            if (vocabData.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">登録された単語はありません。</p>';
+                return;
+            }
+
+            for (let i = vocabData.length - 1; i >= 0; i--) {
+                const item = vocabData[i];
+                const itemEl = document.createElement('div');
+                itemEl.className = 'vocab-item';
+                itemEl.innerHTML = `
+                    <div class="vocab-info">
+                        <div class="eng">${escapeHtml(item.eng)} <span style="font-size:0.75rem; font-weight:normal; padding:2px 6px; border-radius:10px; background:${item.status==='done'?'#d1fae5':'#fee2e2'}; color:${item.status==='done'?'#065f46':'#991b1b'}">${item.status==='done'?'覚えた':'未習得'}</span></div>
+                        <div class="jpn">${escapeHtml(item.jpn)}</div>
+                        ${item.memo ? `<div class="memo">${escapeHtml(item.memo)}</div>` : ''}
+                    </div>
+                    <div class="vocab-actions">
+                        <button class="btn-action btn-edit" onclick="startEdit(${item.id})">編集</button>
+                        <button class="btn-action btn-delete" onclick="deleteVocab(${item.id})">削除</button>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            }
+        }
+
+        function deleteVocab(id) {
+            if (confirm('本当に削除しますか？')) {
+                vocabData = vocabData.filter(item => item.id !== id);
+                saveToLocalStorage();
+                renderList();
+            }
+        }
+
+        // --- スピーキング復習ロジック ---
+        let reviewList = [];
+        let currentReviewIndex = 0;
+        let isAnswerVisible = false;
+
+        function startReview() {
+            reviewList = vocabData.filter(item => item.status === 'yet');
+            if (reviewList.length === 0) {
+                reviewList = [...vocabData]; 
+            }
+            
+            reviewList.sort(() => Math.random() - 0.5);
+            currentReviewIndex = 0;
+            isAnswerVisible = false;
+            renderReviewCard();
+        }
+
+        function renderReviewCard() {
+            const container = document.getElementById('review-container');
+            
+            if (reviewList.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="text-align:center; padding: 40px 20px;">
+                        <p style="font-size:1.2rem; margin-bottom:20px;">📝 まずはフレーズを登録しましょう！</p>
+                    </div>`;
+                return;
+            }
+
+            if (currentReviewIndex >= reviewList.length) {
+                container.innerHTML = `
+                    <div class="card" style="text-align:center; padding: 40px 20px;">
+                        <h2 style="color:var(--success-color); margin-bottom:10px;">🎉 練習完了！</h2>
+                        <p style="margin-bottom:20px;">すべてのフレーズをチェックしました。</p>
+                        <button onclick="startReview()">もう一度練習する</button>
+                    </div>`;
+                return;
+            }
+
+            const item = reviewList[currentReviewIndex];
+            
+            let cardHtml = `
+                <div class="card review-card">
+                    <div style="font-size:0.8rem; color:#6b7280; margin-bottom:15px;">進捗: ${currentReviewIndex + 1} / ${reviewList.length}</div>
+                    <div style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-bottom:5px;">▼ この日本語を英語で言ってください</div>
+                    <div class="review-q">${escapeHtml(item.jpn)}</div>
+            `;
+
+            if (isAnswerVisible) {
+                cardHtml += `
+                    <div class="review-a">${escapeHtml(item.eng)}</div>
+                    <button class="btn-audio" onclick="speakCurrentItem()">🔊 もう一度聴く</button>
+                    <div class="review-memo">${item.memo ? escapeHtml(item.memo) : ''}</div>
+                    <div class="review-actions-btn">
+                        <button class="btn-status btn-yet" onclick="setVocabStatus(${item.id}, 'yet')">❌ まだ口から出ない</button>
+                        <button class="btn-status btn-done" onclick="setVocabStatus(${item.id}, 'done')">⭕ スムーズに言えた！</button>
+                    </div>
+                `;
+                speakCurrentItem();
+            } else {
+                cardHtml += `
+                    <button style="margin-top:20px;" onclick="showAnswer()">答え（英語）を確認</button>
+                `;
+            }
+
+            cardHtml += `</div>`;
+            container.innerHTML = cardHtml;
+        }
+
+        function showAnswer() {
+            isAnswerVisible = true;
+            renderReviewCard();
+        }
+
+        function speakCurrentItem() {
+            const item = reviewList[currentReviewIndex];
+            if (item && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(item.eng);
+                utterance.lang = 'en-US'; 
+                utterance.rate = 0.95;    
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function setVocabStatus(id, newStatus) {
+            const item = vocabData.find(i => i.id === id);
+            if (item) {
+                item.status = newStatus;
+                saveToLocalStorage();
+            }
+            
+            currentReviewIndex++;
+            isAnswerVisible = false;
+            renderReviewCard();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
