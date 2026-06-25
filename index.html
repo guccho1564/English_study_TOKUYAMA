@@ -14,6 +14,7 @@
             --border-color: #e5e7eb;
             --success-color: #10b981;
             --danger-color: #ef4444;
+            --edit-color: #f59e0b;
         }
 
         * {
@@ -115,10 +116,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
         }
 
         .vocab-item:last-child {
             border-bottom: none;
+        }
+
+        .vocab-info {
+            flex: 1;
         }
 
         .vocab-info .eng {
@@ -139,13 +145,32 @@
             font-style: italic;
         }
 
-        .btn-delete {
-            background-color: transparent;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
+        .vocab-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
             padding: 5px 10px;
             width: auto;
             font-size: 0.8rem;
+            background-color: transparent;
+            font-weight: normal;
+        }
+
+        .btn-edit {
+            color: var(--edit-color);
+            border: 1px solid var(--edit-color);
+        }
+        .btn-edit:hover {
+            background-color: var(--edit-color);
+            color: white;
+        }
+
+        .btn-delete {
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
         }
         .btn-delete:hover {
             background-color: var(--danger-color);
@@ -187,7 +212,7 @@
             margin-bottom: 15px;
         }
 
-        .review-actions {
+        .review-actions-btn {
             display: flex;
             gap: 10px;
             width: 100%;
@@ -205,286 +230,4 @@
         .btn-audio {
             background-color: #4b5563;
             width: auto;
-            padding: 6px 15px;
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-        }
-        .btn-audio:hover { background-color: #374151; }
-
-        /* ナビゲーションバー */
-        nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--card-bg);
-            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-around;
-            z-index: 10;
-        }
-
-        .nav-item {
-            flex: 1;
-            text-align: center;
-            padding: 12px 0;
-            font-size: 0.85rem;
-            color: #6b7280;
-            cursor: pointer;
-            border-top: 3px solid transparent;
-        }
-
-        .nav-item.active {
-            color: var(--primary-color);
-            border-top-color: var(--primary-color);
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>スピーキング練習アプリ</h1>
-    </header>
-
-    <div class="container">
-        <!-- 1. 登録画面 -->
-        <div id="tab-add" class="tab-content active">
-            <div class="card">
-                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">フレーズ・単語を登録</h2>
-                <div class="form-group">
-                    <label for="input-eng">英語 (フレーズ / 単語)</label>
-                    <input type="text" id="input-eng" placeholder="例: I'm tied up right now.">
-                </div>
-                <div class="form-group">
-                    <label for="input-jpn">日本語の意味・出すお題</label>
-                    <input type="text" id="input-jpn" placeholder="例: 今、手が離せないんだ。">
-                </div>
-                <div class="form-group">
-                    <label for="input-memo">解説・別の言い方 (任意)</label>
-                    <textarea id="input-memo" placeholder="例: busyよりも「他の用事で身動きが取れない」ニュアンス。"></textarea>
-                </div>
-                <button onclick="addVocab()">登録する</button>
-            </div>
-        </div>
-
-        <!-- 2. 一覧画面 -->
-        <div id="tab-list" class="tab-content">
-            <div class="card">
-                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">登録済みリスト (<span id="vocab-count">0</span>)</h2>
-                <div id="vocab-list-container">
-                    <!-- JavaScriptで動的に追加されます -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. 復習画面 -->
-        <div id="tab-review" class="tab-content">
-            <div id="review-container">
-                <!-- JavaScriptで動的にテスト画面が生成されます -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 下部ナビゲーション -->
-    <nav>
-        <div class="nav-item active" onclick="switchTab('tab-add')">📝 登録</div>
-        <div class="nav-item" onclick="switchTab('tab-list')">📚 一覧</div>
-        <div class="nav-item" onclick="switchTab('tab-review'); startReview();">🔄 復習</div>
-    </nav>
-
-    <script>
-        let vocabData = JSON.parse(localStorage.getItem('my_vocab_data')) || [];
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-
-            if (tabId === 'tab-list') {
-                renderList();
-            }
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem('my_vocab_data', JSON.stringify(vocabData));
-        }
-
-        function addVocab() {
-            const eng = document.getElementById('input-eng').value.trim();
-            const jpn = document.getElementById('input-jpn').value.trim();
-            const memo = document.getElementById('input-memo').value.trim();
-
-            if (!eng || !jpn) {
-                alert('英語と日本語は必須入力です。');
-                return;
-            }
-
-            const newItem = {
-                id: Date.now(),
-                eng: eng,
-                jpn: jpn,
-                memo: memo,
-                status: 'yet'
-            };
-
-            vocabData.push(newItem);
-            saveToLocalStorage();
-
-            document.getElementById('input-eng').value = '';
-            document.getElementById('input-jpn').value = '';
-            document.getElementById('input-memo').value = '';
-
-            alert('登録しました！');
-        }
-
-        function renderList() {
-            const container = document.getElementById('vocab-list-container');
-            document.getElementById('vocab-count').innerText = vocabData.length;
-            container.innerHTML = '';
-
-            if (vocabData.length === 0) {
-                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">登録された単語はありません。</p>';
-                return;
-            }
-
-            for (let i = vocabData.length - 1; i >= 0; i--) {
-                const item = vocabData[i];
-                const itemEl = document.createElement('div');
-                itemEl.className = 'vocab-item';
-                itemEl.innerHTML = `
-                    <div class="vocab-info">
-                        <div class="eng">${escapeHtml(item.eng)} <span style="font-size:0.75rem; font-weight:normal; padding:2px 6px; border-radius:10px; background:${item.status==='done'?'#d1fae5':'#fee2e2'}; color:${item.status==='done'?'#065f46':'#991b1b'}">${item.status==='done'?'覚えた':'未習得'}</span></div>
-                        <div class="jpn">${escapeHtml(item.jpn)}</div>
-                        ${item.memo ? `<div class="memo">${escapeHtml(item.memo)}</div>` : ''}
-                    </div>
-                    <button class="btn-delete" onclick="deleteVocab(${item.id})">削除</button>
-                `;
-                container.appendChild(itemEl);
-            }
-        }
-
-        function deleteVocab(id) {
-            if (confirm('本当に削除しますか？')) {
-                vocabData = vocabData.filter(item => item.id !== id);
-                saveToLocalStorage();
-                renderList();
-            }
-        }
-
-        // --- スピーキング復習ロジック ---
-        let reviewList = [];
-        let currentReviewIndex = 0;
-        let isAnswerVisible = false;
-
-        function startReview() {
-            reviewList = vocabData.filter(item => item.status === 'yet');
-            if (reviewList.length === 0) {
-                reviewList = [...vocabData]; 
-            }
-            
-            reviewList.sort(() => Math.random() - 0.5);
-            currentReviewIndex = 0;
-            isAnswerVisible = false;
-            renderReviewCard();
-        }
-
-        function renderReviewCard() {
-            const container = document.getElementById('review-container');
-            
-            if (reviewList.length === 0) {
-                container.innerHTML = `
-                    <div class="card" style="text-align:center; padding: 40px 20px;">
-                        <p style="font-size:1.2rem; margin-bottom:20px;">📝 まずはフレーズを登録しましょう！</p>
-                    </div>`;
-                return;
-            }
-
-            if (currentReviewIndex >= reviewList.length) {
-                container.innerHTML = `
-                    <div class="card" style="text-align:center; padding: 40px 20px;">
-                        <h2 style="color:var(--success-color); margin-bottom:10px;">🎉 練習完了！</h2>
-                        <p style="margin-bottom:20px;">すべてのフレーズをチェックしました。</p>
-                        <button onclick="startReview()">もう一度練習する</button>
-                    </div>`;
-                return;
-            }
-
-            const item = reviewList[currentReviewIndex];
-            
-            let cardHtml = `
-                <div class="card review-card">
-                    <div style="font-size:0.8rem; color:#6b7280; margin-bottom:15px;">進捗: ${currentReviewIndex + 1} / ${reviewList.length}</div>
-                    <div style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-bottom:5px;">▼ この日本語を英語で言ってください</div>
-                    <div class="review-q">${escapeHtml(item.jpn)}</div>
-            `;
-
-            if (isAnswerVisible) {
-                cardHtml += `
-                    <div class="review-a">${escapeHtml(item.eng)}</div>
-                    <button class="btn-audio" onclick="speakCurrentItem()">🔊 もう一度聴く</button>
-                    <div class="review-memo">${item.memo ? escapeHtml(item.memo) : ''}</div>
-                    <div class="review-actions">
-                        <button class="btn-status btn-yet" onclick="setVocabStatus(${item.id}, 'yet')">❌ まだ口から出ない</button>
-                        <button class="btn-status btn-done" onclick="setVocabStatus(${item.id}, 'done')">⭕ スムーズに言えた！</button>
-                    </div>
-                `;
-                // 答えが表示された瞬間に音声を自動再生
-                speakCurrentItem();
-            } else {
-                cardHtml += `
-                    <button style="margin-top:20px;" onclick="showAnswer()">答え（英語）を確認</button>
-                `;
-            }
-
-            cardHtml += `</div>`;
-            container.innerHTML = cardHtml;
-        }
-
-        function showAnswer() {
-            isAnswerVisible = true;
-            renderReviewCard();
-        }
-
-        // 音声読み上げの実行
-        function speakCurrentItem() {
-            const item = reviewList[currentReviewIndex];
-            if (item && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 連続タップ時に音声をリセット
-                const utterance = new SpeechSynthesisUtterance(item.eng);
-                utterance.lang = 'en-US'; // アメリカ英語（イギリス英語が良い場合は 'en-GB' に変更可能）
-                utterance.rate = 0.95;    // ほんの少しだけ聞き取りやすい速度に調整（標準は1.0）
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        function setVocabStatus(id, newStatus) {
-            const item = vocabData.find(i => i.id === id);
-            if (item) {
-                item.status = newStatus;
-                saveToLocalStorage();
-            }
-            
-            currentReviewIndex++;
-            isAnswerVisible = false;
-            renderReviewCard();
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-    </script>
-</body>
-</html>
+            padding: 6px 15px
