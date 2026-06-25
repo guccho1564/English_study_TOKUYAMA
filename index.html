@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My English Learning App</title>
+    <title>Speaking English App</title>
     <style>
         :root {
             --primary-color: #4f46e5;
@@ -154,7 +154,7 @@
 
         /* 復習画面のスタイル */
         .review-card {
-            min-height: 200px;
+            min-height: 250px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -163,18 +163,20 @@
             border: 2px solid var(--primary-color);
         }
 
-        .review-eng {
-            font-size: 1.5rem;
-            font-weight: bold;
+        .review-q {
+            font-size: 1.3rem;
+            color: var(--text-color);
             margin-bottom: 20px;
+            font-weight: bold;
         }
 
-        .review-jpn {
-            font-size: 1.2rem;
-            color: #374151;
+        .review-a {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--primary-color);
             margin-bottom: 10px;
-            background-color: #f3f4f6;
-            padding: 10px 20px;
+            background-color: #e0e7ff;
+            padding: 15px 20px;
             border-radius: 6px;
             width: 100%;
         }
@@ -182,13 +184,14 @@
         .review-memo {
             font-size: 0.9rem;
             color: #6b7280;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .review-actions {
             display: flex;
             gap: 10px;
             width: 100%;
+            margin-top: 10px;
         }
 
         .btn-status {
@@ -198,6 +201,15 @@
         .btn-yet:hover { background-color: #dc2626; }
         .btn-done { background-color: var(--success-color); }
         .btn-done:hover { background-color: #059669; }
+
+        .btn-audio {
+            background-color: #4b5563;
+            width: auto;
+            padding: 6px 15px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+        .btn-audio:hover { background-color: #374151; }
 
         /* ナビゲーションバー */
         nav {
@@ -232,43 +244,49 @@
 <body>
 
     <header>
-        <h1 id="app-title">英語学習アプリ</h1>
+        <h1>スピーキング練習アプリ</h1>
     </header>
 
     <div class="container">
+        <!-- 1. 登録画面 -->
         <div id="tab-add" class="tab-content active">
             <div class="card">
-                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">新しいフレーズ・単語を登録</h2>
+                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">フレーズ・単語を登録</h2>
                 <div class="form-group">
                     <label for="input-eng">英語 (フレーズ / 単語)</label>
-                    <input type="text" id="input-eng" placeholder="例: Break a leg!">
+                    <input type="text" id="input-eng" placeholder="例: I'm tied up right now.">
                 </div>
                 <div class="form-group">
-                    <label for="input-jpn">日本語の意味</label>
-                    <input type="text" id="input-jpn" placeholder="例: 頑張って！、幸運を祈る！">
+                    <label for="input-jpn">日本語の意味・出すお題</label>
+                    <input type="text" id="input-jpn" placeholder="例: 今、手が離せないんだ。">
                 </div>
                 <div class="form-group">
-                    <label for="input-memo">メモ・例文 (任意)</label>
-                    <textarea id="input-memo" placeholder="例: 舞台に出る前の人に使う表現。"></textarea>
+                    <label for="input-memo">解説・別の言い方 (任意)</label>
+                    <textarea id="input-memo" placeholder="例: busyよりも「他の用事で身動きが取れない」ニュアンス。"></textarea>
                 </div>
                 <button onclick="addVocab()">登録する</button>
             </div>
         </div>
 
+        <!-- 2. 一覧画面 -->
         <div id="tab-list" class="tab-content">
             <div class="card">
                 <h2 style="margin-bottom: 15px; font-size: 1.1rem;">登録済みリスト (<span id="vocab-count">0</span>)</h2>
                 <div id="vocab-list-container">
-                    </div>
+                    <!-- JavaScriptで動的に追加されます -->
+                </div>
             </div>
         </div>
 
+        <!-- 3. 復習画面 -->
         <div id="tab-review" class="tab-content">
             <div id="review-container">
-                </div>
+                <!-- JavaScriptで動的にテスト画面が生成されます -->
+            </div>
         </div>
     </div>
 
+    <!-- 下部ナビゲーション -->
     <nav>
         <div class="nav-item active" onclick="switchTab('tab-add')">📝 登録</div>
         <div class="nav-item" onclick="switchTab('tab-list')">📚 一覧</div>
@@ -276,10 +294,8 @@
     </nav>
 
     <script>
-        // データ管理用の配列（LocalStorageから読み込む）
         let vocabData = JSON.parse(localStorage.getItem('my_vocab_data')) || [];
 
-        // 画面の切り替え（タブ機能）
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
@@ -296,19 +312,17 @@
             }
         }
 
-        // データの保存
         function saveToLocalStorage() {
             localStorage.setItem('my_vocab_data', JSON.stringify(vocabData));
         }
 
-        // 単語の追加
         function addVocab() {
             const eng = document.getElementById('input-eng').value.trim();
             const jpn = document.getElementById('input-jpn').value.trim();
             const memo = document.getElementById('input-memo').value.trim();
 
             if (!eng || !jpn) {
-                alert('英語と日本語の意味は必須入力です。');
+                alert('英語と日本語は必須入力です。');
                 return;
             }
 
@@ -317,13 +331,12 @@
                 eng: eng,
                 jpn: jpn,
                 memo: memo,
-                status: 'yet' // 'yet' (まだ) か 'done' (覚えた)
+                status: 'yet'
             };
 
             vocabData.push(newItem);
             saveToLocalStorage();
 
-            // フォームをリセット
             document.getElementById('input-eng').value = '';
             document.getElementById('input-jpn').value = '';
             document.getElementById('input-memo').value = '';
@@ -331,7 +344,6 @@
             alert('登録しました！');
         }
 
-        // リストの表示
         function renderList() {
             const container = document.getElementById('vocab-list-container');
             document.getElementById('vocab-count').innerText = vocabData.length;
@@ -342,7 +354,6 @@
                 return;
             }
 
-            // 新しく登録したものが上に来るように逆順でループ
             for (let i = vocabData.length - 1; i >= 0; i--) {
                 const item = vocabData[i];
                 const itemEl = document.createElement('div');
@@ -359,7 +370,6 @@
             }
         }
 
-        // 単語の削除
         function deleteVocab(id) {
             if (confirm('本当に削除しますか？')) {
                 vocabData = vocabData.filter(item => item.id !== id);
@@ -368,21 +378,18 @@
             }
         }
 
-        // --- 復習機能のロジック ---
+        // --- スピーキング復習ロジック ---
         let reviewList = [];
         let currentReviewIndex = 0;
         let isAnswerVisible = false;
 
         function startReview() {
-            // 「まだ覚えていない(yet)」単語を優先して復習リストにする（なければすべてを対象にする）
             reviewList = vocabData.filter(item => item.status === 'yet');
             if (reviewList.length === 0) {
-                reviewList = [...vocabData]; // 全部覚えた状態なら全件対象にする
+                reviewList = [...vocabData]; 
             }
             
-            // ランダムに並び替える（シャッフル）
             reviewList.sort(() => Math.random() - 0.5);
-            
             currentReviewIndex = 0;
             isAnswerVisible = false;
             renderReviewCard();
@@ -394,7 +401,7 @@
             if (reviewList.length === 0) {
                 container.innerHTML = `
                     <div class="card" style="text-align:center; padding: 40px 20px;">
-                        <p style="font-size:1.2rem; margin-bottom:20px;">📝 まずは単語を登録しましょう！</p>
+                        <p style="font-size:1.2rem; margin-bottom:20px;">📝 まずはフレーズを登録しましょう！</p>
                     </div>`;
                 return;
             }
@@ -402,9 +409,9 @@
             if (currentReviewIndex >= reviewList.length) {
                 container.innerHTML = `
                     <div class="card" style="text-align:center; padding: 40px 20px;">
-                        <h2 style="color:var(--success-color); margin-bottom:10px;">🎉 復習完了！</h2>
-                        <p style="margin-bottom:20px;">すべてのカードをチェックしました。</p>
-                        <button onclick="startReview()">もう一度復習する</button>
+                        <h2 style="color:var(--success-color); margin-bottom:10px;">🎉 練習完了！</h2>
+                        <p style="margin-bottom:20px;">すべてのフレーズをチェックしました。</p>
+                        <button onclick="startReview()">もう一度練習する</button>
                     </div>`;
                 return;
             }
@@ -413,22 +420,26 @@
             
             let cardHtml = `
                 <div class="card review-card">
-                    <div style="font-size:0.8rem; color:#6b7280; margin-bottom:10px;">進捗: ${currentReviewIndex + 1} / ${reviewList.length}</div>
-                    <div class="review-eng">${escapeHtml(item.eng)}</div>
+                    <div style="font-size:0.8rem; color:#6b7280; margin-bottom:15px;">進捗: ${currentReviewIndex + 1} / ${reviewList.length}</div>
+                    <div style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-bottom:5px;">▼ この日本語を英語で言ってください</div>
+                    <div class="review-q">${escapeHtml(item.jpn)}</div>
             `;
 
             if (isAnswerVisible) {
                 cardHtml += `
-                    <div class="review-jpn">${escapeHtml(item.jpn)}</div>
+                    <div class="review-a">${escapeHtml(item.eng)}</div>
+                    <button class="btn-audio" onclick="speakCurrentItem()">🔊 もう一度聴く</button>
                     <div class="review-memo">${item.memo ? escapeHtml(item.memo) : ''}</div>
                     <div class="review-actions">
-                        <button class="btn-status btn-yet" onclick="setVocabStatus(${item.id}, 'yet')">❌ まだ</button>
-                        <button class="btn-status btn-done" onclick="setVocabStatus(${item.id}, 'done')">⭕ 覚えた！</button>
+                        <button class="btn-status btn-yet" onclick="setVocabStatus(${item.id}, 'yet')">❌ まだ口から出ない</button>
+                        <button class="btn-status btn-done" onclick="setVocabStatus(${item.id}, 'done')">⭕ スムーズに言えた！</button>
                     </div>
                 `;
+                // 答えが表示された瞬間に音声を自動再生
+                speakCurrentItem();
             } else {
                 cardHtml += `
-                    <button style="margin-top:20px;" onclick="showAnswer()">答えを表示</button>
+                    <button style="margin-top:20px;" onclick="showAnswer()">答え（英語）を確認</button>
                 `;
             }
 
@@ -441,21 +452,30 @@
             renderReviewCard();
         }
 
+        // 音声読み上げの実行
+        function speakCurrentItem() {
+            const item = reviewList[currentReviewIndex];
+            if (item && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // 連続タップ時に音声をリセット
+                const utterance = new SpeechSynthesisUtterance(item.eng);
+                utterance.lang = 'en-US'; // アメリカ英語（イギリス英語が良い場合は 'en-GB' に変更可能）
+                utterance.rate = 0.95;    // ほんの少しだけ聞き取りやすい速度に調整（標準は1.0）
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
         function setVocabStatus(id, newStatus) {
-            // 元のデータ（vocabData）のステータスを更新
             const item = vocabData.find(i => i.id === id);
             if (item) {
                 item.status = newStatus;
                 saveToLocalStorage();
             }
             
-            // 次のカードへ
             currentReviewIndex++;
             isAnswerVisible = false;
             renderReviewCard();
         }
 
-        // セキュリティ対策（XSS防止）用の関数
         function escapeHtml(str) {
             if (!str) return '';
             return str
