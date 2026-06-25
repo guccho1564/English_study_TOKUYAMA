@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My English Learning App</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding-bottom: 60px;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* フォームのスタイル */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* リストのスタイル */
+        .vocab-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vocab-item:last-child {
+            border-bottom: none;
+        }
+
+        .vocab-info .eng {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .vocab-info .jpn {
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        .vocab-info .memo {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 5px 10px;
+            width: auto;
+            font-size: 0.8rem;
+        }
+        .btn-delete:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* 復習画面のスタイル */
+        .review-card {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 2px solid var(--primary-color);
+        }
+
+        .review-eng {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .review-jpn {
+            font-size: 1.2rem;
+            color: #374151;
+            margin-bottom: 10px;
+            background-color: #f3f4f6;
+            padding: 10px 20px;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .review-memo {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-status {
+            flex: 1;
+        }
+        .btn-yet { background-color: var(--danger-color); }
+        .btn-yet:hover { background-color: #dc2626; }
+        .btn-done { background-color: var(--success-color); }
+        .btn-done:hover { background-color: #059669; }
+
+        /* ナビゲーションバー */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            z-index: 10;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 0.85rem;
+            color: #6b7280;
+            cursor: pointer;
+            border-top: 3px solid transparent;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            border-top-color: var(--primary-color);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="app-title">英語学習アプリ</h1>
+    </header>
+
+    <div class="container">
+        <div id="tab-add" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">新しいフレーズ・単語を登録</h2>
+                <div class="form-group">
+                    <label for="input-eng">英語 (フレーズ / 単語)</label>
+                    <input type="text" id="input-eng" placeholder="例: Break a leg!">
+                </div>
+                <div class="form-group">
+                    <label for="input-jpn">日本語の意味</label>
+                    <input type="text" id="input-jpn" placeholder="例: 頑張って！、幸運を祈る！">
+                </div>
+                <div class="form-group">
+                    <label for="input-memo">メモ・例文 (任意)</label>
+                    <textarea id="input-memo" placeholder="例: 舞台に出る前の人に使う表現。"></textarea>
+                </div>
+                <button onclick="addVocab()">登録する</button>
+            </div>
+        </div>
+
+        <div id="tab-list" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 15px; font-size: 1.1rem;">登録済みリスト (<span id="vocab-count">0</span>)</h2>
+                <div id="vocab-list-container">
+                    </div>
+            </div>
+        </div>
+
+        <div id="tab-review" class="tab-content">
+            <div id="review-container">
+                </div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-item active" onclick="switchTab('tab-add')">📝 登録</div>
+        <div class="nav-item" onclick="switchTab('tab-list')">📚 一覧</div>
+        <div class="nav-item" onclick="switchTab('tab-review'); startReview();">🔄 復習</div>
+    </nav>
+
+    <script>
+        // データ管理用の配列（LocalStorageから読み込む）
+        let vocabData = JSON.parse(localStorage.getItem('my_vocab_data')) || [];
+
+        // 画面の切り替え（タブ機能）
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if (tabId === 'tab-list') {
+                renderList();
+            }
+        }
+
+        // データの保存
+        function saveToLocalStorage() {
+            localStorage.setItem('my_vocab_data', JSON.stringify(vocabData));
+        }
+
+        // 単語の追加
+        function addVocab() {
+            const eng = document.getElementById('input-eng').value.trim();
+            const jpn = document.getElementById('input-jpn').value.trim();
+            const memo = document.getElementById('input-memo').value.trim();
+
+            if (!eng || !jpn) {
+                alert('英語と日本語の意味は必須入力です。');
+                return;
+            }
+
+            const newItem = {
+                id: Date.now(),
+                eng: eng,
+                jpn: jpn,
+                memo: memo,
+                status: 'yet' // 'yet' (まだ) か 'done' (覚えた)
+            };
+
+            vocabData.push(newItem);
+            saveToLocalStorage();
+
+            // フォームをリセット
+            document.getElementById('input-eng').value = '';
+            document.getElementById('input-jpn').value = '';
+            document.getElementById('input-memo').value = '';
+
+            alert('登録しました！');
+        }
+
+        // リストの表示
+        function renderList() {
+            const container = document.getElementById('vocab-list-container');
+            document.getElementById('vocab-count').innerText = vocabData.length;
+            container.innerHTML = '';
+
+            if (vocabData.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">登録された単語はありません。</p>';
+                return;
+            }
+
+            // 新しく登録したものが上に来るように逆順でループ
+            for (let i = vocabData.length - 1; i >= 0; i--) {
+                const item = vocabData[i];
+                const itemEl = document.createElement('div');
+                itemEl.className = 'vocab-item';
+                itemEl.innerHTML = `
+                    <div class="vocab-info">
+                        <div class="eng">${escapeHtml(item.eng)} <span style="font-size:0.75rem; font-weight:normal; padding:2px 6px; border-radius:10px; background:${item.status==='done'?'#d1fae5':'#fee2e2'}; color:${item.status==='done'?'#065f46':'#991b1b'}">${item.status==='done'?'覚えた':'未習得'}</span></div>
+                        <div class="jpn">${escapeHtml(item.jpn)}</div>
+                        ${item.memo ? `<div class="memo">${escapeHtml(item.memo)}</div>` : ''}
+                    </div>
+                    <button class="btn-delete" onclick="deleteVocab(${item.id})">削除</button>
+                `;
+                container.appendChild(itemEl);
+            }
+        }
+
+        // 単語の削除
+        function deleteVocab(id) {
+            if (confirm('本当に削除しますか？')) {
+                vocabData = vocabData.filter(item => item.id !== id);
+                saveToLocalStorage();
+                renderList();
+            }
+        }
+
+        // --- 復習機能のロジック ---
+        let reviewList = [];
+        let currentReviewIndex = 0;
+        let isAnswerVisible = false;
+
+        function startReview() {
+            // 「まだ覚えていない(yet)」単語を優先して復習リストにする（なければすべてを対象にする）
+            reviewList = vocabData.filter(item => item.status === 'yet');
+            if (reviewList.length === 0) {
+                reviewList = [...vocabData]; // 全部覚えた状態なら全件対象にする
+            }
+            
+            // ランダムに並び替える（シャッフル）
+            reviewList.sort(() => Math.random() - 0.5);
+            
+            currentReviewIndex = 0;
+            isAnswerVisible = false;
+            renderReviewCard();
+        }
+
+        function renderReviewCard() {
+            const container = document.getElementById('review-container');
+            
+            if (reviewList.length === 0) {
+                container.innerHTML = `
+                    <div class="card" style="text-align:center; padding: 40px 20px;">
+                        <p style="font-size:1.2rem; margin-bottom:20px;">📝 まずは単語を登録しましょう！</p>
+                    </div>`;
+                return;
+            }
+
+            if (currentReviewIndex >= reviewList.length) {
+                container.innerHTML = `
+                    <div class="card" style="text-align:center; padding: 40px 20px;">
+                        <h2 style="color:var(--success-color); margin-bottom:10px;">🎉 復習完了！</h2>
+                        <p style="margin-bottom:20px;">すべてのカードをチェックしました。</p>
+                        <button onclick="startReview()">もう一度復習する</button>
+                    </div>`;
+                return;
+            }
+
+            const item = reviewList[currentReviewIndex];
+            
+            let cardHtml = `
+                <div class="card review-card">
+                    <div style="font-size:0.8rem; color:#6b7280; margin-bottom:10px;">進捗: ${currentReviewIndex + 1} / ${reviewList.length}</div>
+                    <div class="review-eng">${escapeHtml(item.eng)}</div>
+            `;
+
+            if (isAnswerVisible) {
+                cardHtml += `
+                    <div class="review-jpn">${escapeHtml(item.jpn)}</div>
+                    <div class="review-memo">${item.memo ? escapeHtml(item.memo) : ''}</div>
+                    <div class="review-actions">
+                        <button class="btn-status btn-yet" onclick="setVocabStatus(${item.id}, 'yet')">❌ まだ</button>
+                        <button class="btn-status btn-done" onclick="setVocabStatus(${item.id}, 'done')">⭕ 覚えた！</button>
+                    </div>
+                `;
+            } else {
+                cardHtml += `
+                    <button style="margin-top:20px;" onclick="showAnswer()">答えを表示</button>
+                `;
+            }
+
+            cardHtml += `</div>`;
+            container.innerHTML = cardHtml;
+        }
+
+        function showAnswer() {
+            isAnswerVisible = true;
+            renderReviewCard();
+        }
+
+        function setVocabStatus(id, newStatus) {
+            // 元のデータ（vocabData）のステータスを更新
+            const item = vocabData.find(i => i.id === id);
+            if (item) {
+                item.status = newStatus;
+                saveToLocalStorage();
+            }
+            
+            // 次のカードへ
+            currentReviewIndex++;
+            isAnswerVisible = false;
+            renderReviewCard();
+        }
+
+        // セキュリティ対策（XSS防止）用の関数
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
